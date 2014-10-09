@@ -1,3 +1,5 @@
+open Batteries
+
 type binop = Add | Sub | Mul | Div | Leq | Le | Geq | Gr | Eq | Neq | Asn
 
 type lval =
@@ -80,31 +82,32 @@ and funArgsToString = function
     | [x] -> exprToString x
     | x::xs -> exprToString x^", "^funArgsToString xs
 
+and indent = List.map ((^)"\t")
+and istmtToString x = indent @@ stmtToString x
+
 and stmtToString = function
-    | Continue -> "continue;\n"
-    | Break -> "break;\n"
-    | Return None -> "return;\n"
-    | Return (Some x) -> "return "^exprToString x^";\n"
-    | Local (t,x) -> typToString t^" "^x^";\n"
-    | Expr e -> exprToString e^";\n"
-    | IfThenElse (b,x,y) -> "if ("^exprToString b^")\n"^stmtToString x^"else\n"^stmtToString y
-    | For (i,t,p,s) -> "for ("^exprToString i^";"^exprToString t^";"^exprToString p^")\n"^stmtToString s
-    | While (b,s) -> "while ("^exprToString b^")\n"^stmtToString s
-    | DoWhile (s,b) -> "do\n"^stmtToString s^"while ("^exprToString b^");\n"
-    | Label s -> s^":"
-    | Goto s  -> "goto "^s^";\n"
-    | Switch (e,xs) -> "switch ("^exprToString e^") {\n"^sstmtToString xs^"}\n"
-    | Block xs -> "{\n"^stmtsToString xs^"}\n"
+    | Continue -> ["continue;"]
+    | Break -> ["break;"]
+    | Return None -> ["return;"]
+    | Return (Some x) -> ["return "^exprToString x^";"]
+    | Local (t,x) -> [typToString t^" "^x^";"]
+    | Expr e -> [exprToString e^";"]
+    | IfThenElse (b,x,y) -> ("if ("^exprToString b^")") :: istmtToString x @ "else" :: istmtToString y
+    | For (i,t,p,s) -> ("for ("^exprToString i^";"^exprToString t^";"^exprToString p^")") :: istmtToString s
+    | While (b,s) -> ("while ("^exprToString b^")") :: istmtToString s
+    | DoWhile (s,b) -> "do" :: istmtToString s @ ["while ("^exprToString b^");"]
+    | Label s -> [s^":"]
+    | Goto s  -> ["goto "^s^";"]
+    | Switch (e,xs) -> ("switch ("^exprToString e^") {") :: sstmtToString xs @ ["}"]
+    | Block xs -> "{" :: istmtsToString xs @ ["}"]
 
 and sstmtToString = function
-  | []                      -> ""
-  | Default::xs             -> "default:\n"^sstmtToString xs
-  | (Case x)::xs            -> "case "^string_of_int x^":\n"^sstmtToString xs
-  | (NormalStatement s)::xs -> stmtToString s^sstmtToString xs
+  | []                      -> []
+  | Default::xs             -> "default:" :: sstmtToString xs
+  | (Case x)::xs            -> ("case "^string_of_int x^":") :: sstmtToString xs
+  | (NormalStatement s)::xs -> stmtToString s @ sstmtToString xs
 
-and stmtsToString = function
-  | [] -> ""
-  | x::xs -> "\t" ^ stmtToString x ^ stmtsToString xs
+and istmtsToString xs = List.concat @@ List.map istmtToString xs
 
 let rec defsToString = function
   | [] -> "\n"
@@ -118,7 +121,7 @@ let rec argToString = function
 let declToString = function
   | StructDecl (n,xs) -> "struct "^n^" {"^defsToString xs^"}\n"
   | Global  (t,n)  ->  typToString t^" "^n^";\n"
-  | Function (r,n,args,xs) -> typToString r^" "^n^"("^argToString args^") {\n"^stmtsToString xs^"}\n"
+  | Function (r,n,args,xs) -> typToString r^" "^n^"("^argToString args^") {\n"^String.concat "\n" (istmtsToString xs)^"\n}\n"
 
 let rec declsToString = function
   | [] -> ""
