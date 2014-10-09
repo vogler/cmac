@@ -9,6 +9,14 @@ Biggest simplifications:
  * no function pointer type --- difficult to parse, also we don't care
  * no semicolon after "struct n {...}"
 
+Installation
+------------
+
+       opam install batteries menhir
+       make
+
+Menhir is optional, you can use `make yacc` to compile using ocamllex/ocamlyacc instead.
+
 Syntax
 ------
 

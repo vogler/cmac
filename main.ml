@@ -1,12 +1,9 @@
-open Printf 
-open Simc_lex
+open Batteries
 
 let parse buf : Simc.decl list =
   Simc_pars.decls Simc_lex.ctok buf
 
-let main () =
-  let lexbuf = Lexing.from_channel stdin in
-  printf "%s\n" (Simc.declsToString (parse lexbuf))
-
-let _ = Printexc.print main () 
-
+let _ =
+  let cin = if Array.length Sys.argv > 1 then open_in Sys.argv.(1) else stdin in
+  let lexbuf = Lexing.from_channel cin in
+  print_endline @@ Simc.declsToString @@ parse lexbuf

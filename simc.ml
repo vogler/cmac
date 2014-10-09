@@ -1,38 +1,37 @@
-
 type binop = Add | Sub | Mul | Div | Leq | Le | Geq | Gr | Eq | Neq | Asn
 
-type lval = 
+type lval =
   | Var   of string
   | Deref of expr
   | Field of lval * string
   | Index of lval * expr
-and expr = 
+and expr =
   | Val   of int
   | Lval  of lval
   | Addr  of lval
   | Binop of expr * binop * expr
   | App   of expr * expr list
-  
-type typ = 
+
+type typ =
   | Int | Void
   | Struct of string
   | Ptr    of typ
-  
-type stmt = 
-  | Continue 
-  | Break   
+
+type stmt =
+  | Continue
+  | Break
   | Return     of expr option
-  | Local      of typ  * string 
-  | Expr       of expr 
+  | Local      of typ  * string
+  | Expr       of expr
   | IfThenElse of expr * stmt * stmt
   | For        of expr * expr * expr * stmt
   | While      of expr * stmt
   | DoWhile    of stmt * expr
-  | Lable      of string
+  | Label      of string
   | Goto       of string
   | Switch     of expr * (switch_stmt list)
 and switch_stmt =
-  | Default 
+  | Default
   | Case            of int
   | NormalStatement of stmt
 
@@ -42,9 +41,9 @@ type decl =
   | Function   of typ * string * ((typ * string) list) * (stmt list)
 
 (* helper functions *)
-  
+
 let binopToString = function
-  | Add -> "+" 
+  | Add -> "+"
   | Sub -> "-"
   | Mul -> "*"
   | Div -> "/"
@@ -56,14 +55,14 @@ let binopToString = function
   | Neq -> "!="
   | Asn -> "="
 
-let rec typToString = function 
+let rec typToString = function
   | Int -> "int"
   | Void -> "void"
   | Struct x -> "struct "^x
   | Ptr t -> typToString t^" *"
-  
+
 let rec lvalToString = function
-  | Var x -> x 
+  | Var x -> x
   | Deref e -> exprToString e
   | Index (l,e) -> lvalToString l^"["^exprToString e^"]"
   | Field (l,n) -> lvalToString l^"."^n
@@ -73,7 +72,7 @@ and exprToString = function
   | Lval x        -> lvalToString x
   | Addr x        -> lvalToString x
   | Binop (x,o,y) -> exprToString x^" "^binopToString o^" "^exprToString y
-  | App (f, xs)   -> exprToString f^"("^funArgsToString xs^")" 
+  | App (f, xs)   -> exprToString f^"("^funArgsToString xs^")"
 
 and funArgsToString = function
     | [] -> ""
@@ -87,11 +86,11 @@ and stmtToString = function
     | Return (Some x) -> "return "^exprToString x^";\n"
     | Local (t,x) -> typToString t^" "^x^";\n"
     | Expr e -> exprToString e^";\n"
-    | IfThenElse (b,x,y) -> "if "^exprToString b^" then \n"^stmtToString x^"\nelse\n"^stmtToString y^"\n"
+    | IfThenElse (b,x,y) -> "if "^exprToString b^" then\n\t"^stmtToString x^"else\n\t"^stmtToString y^"\n"
     | For (i,t,p,s) -> "for ("^exprToString i^";"^exprToString t^";"^exprToString p^") "^stmtToString s^"\n"
     | While (b,s) -> "while ("^exprToString b^") "^stmtToString s^"\n"
     | DoWhile (s,b) -> "do "^stmtToString s^" while ("^exprToString b^")"^"\n"
-    | Lable s -> s^":"
+    | Label s -> s^":"
     | Goto s  -> "goto "^s^";\n"
     | Switch (e,xs) -> "switch ("^exprToString e^") {\n"^sstmtToString xs^"}\n"
 
@@ -103,11 +102,11 @@ and sstmtToString = function
 
 let rec stmtsToString = function
   | [] -> ""
-  | x::xs -> stmtToString x ^ stmtsToString xs
+  | x::xs -> "\t" ^ stmtToString x ^ stmtsToString xs
 
 let rec defsToString = function
   | [] -> "\n"
-  | (t,x)::xs -> "\n"^typToString t^" "^x^";"^defsToString xs
+  | (t,x)::xs -> "\n\t"^typToString t^" "^x^";"^defsToString xs
 
 let rec argToString = function
   | [] -> ""
@@ -122,4 +121,3 @@ let declToString = function
 let rec declsToString = function
   | [] -> ""
   | x::xs -> declToString x^declsToString xs
-  

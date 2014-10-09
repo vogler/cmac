@@ -1,5 +1,5 @@
-struct s { 
-  int *p; 
+struct s {
+  int *p;
   int i;
 }
 

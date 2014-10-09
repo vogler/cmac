@@ -1,11 +1,11 @@
-%{    
+%{
 open Simc
 %}
 
 %token AMP
 %token ADD SUB MUL DIV LEQ LE GEQ GR EQ NEQ
 
-%token ERROR EOF LPAR RPAR LBRAC RBRAC LCURL RCURL DEF COLON SCOLON COMMA DOT INT VOID
+%token EOF LPAR RPAR LBRAC RBRAC LCURL RCURL DEF COLON SCOLON COMMA DOT INT VOID
 %token IF THEN ELSE RETURN GOTO CONTINUE BREAK WHILE FOR SWITCH CASE DEFAULT STRUCT DO
 %token <int>    VAL
 %token <string> ID
@@ -13,17 +13,17 @@ open Simc
 %start decls
 %type <Simc.expr>       exp
 %type <Simc.lval>       lval
-%type <Simc.typ>        type
+%type <Simc.typ>        typ
 %type <Simc.stmt>       stmt
 %type <Simc.decl list>  decls
 
 %nonassoc LOW AMP DEF
-%nonassoc LEQ LE GEQ GR EQ NEQ 
-%left ADD SUB 
-%left MUL DIV 
+%nonassoc LEQ LE GEQ GR EQ NEQ
+%left ADD SUB
+%left MUL DIV
 %nonassoc DOT LBRAC LPAR
 
-%% 
+%%
 
 lval: ID                   { Var $1 }
     | MUL s_exp            { Deref $2 }
@@ -31,14 +31,14 @@ lval: ID                   { Var $1 }
     | lval LBRAC exp RBRAC { Index ($1,$3) }
     ;
 
-f_args_:                    { [] } 
+f_args_:                    { [] }
        | COMMA exp f_args_  { $2::$3 }
        ;
-       
+
 f_args:               { [] }
       | exp f_args_   { $1::$2 }
       ;
-  
+
 s_exp: VAL                    { Val $1 }
      | AMP lval               { Addr $2 }
      | lval     %prec LOW     { Lval $1 }
@@ -46,7 +46,7 @@ s_exp: VAL                    { Val $1 }
      | LPAR exp RPAR          { $2 }
      ;
 
-exp: s_exp            { $1 } 
+exp: s_exp            { $1 }
    | exp ADD exp      { Binop ($1,Add,$3) }
    | exp SUB exp      { Binop ($1,Sub,$3) }
    | exp MUL exp      { Binop ($1,Mul,$3) }
@@ -60,22 +60,22 @@ exp: s_exp            { $1 }
    | exp DEF exp      { Binop ($1,Asn,$3) }
    ;
 
-type: INT       { Int }
+typ: INT       { Int }
     | VOID      { Void }
     | STRUCT ID { Struct $2 }
-    | type MUL  { Ptr $1 }
+    | typ MUL  { Ptr $1 }
     ;
 
-vdecl: type ID          { ($1,$2) }
+vdecl: typ ID          { ($1,$2) }
 ;
 
 vdecls:                        { [] }
       | vdecl SCOLON vdecls    { $1::$3 }
       ;
 
-decl: STRUCT ID LCURL vdecls RCURL                    { StructDecl ($2,$4) } 
-    | vdecl SCOLON                                    { (fun (x,y) -> Global (x,y) ) $1 }
-    | type ID LPAR args RPAR LCURL stmts RCURL        { Function ($1,$2,$4,$7) }
+decl: STRUCT ID LCURL vdecls RCURL                 { StructDecl ($2,$4) }
+    | vdecl SCOLON                                 { (fun (x,y) -> Global (x,y) ) $1 }
+    | typ ID LPAR args RPAR LCURL stmts RCURL      { Function ($1,$2,$4,$7) }
     ;
 
 args:              { [] }
@@ -86,17 +86,18 @@ args_:                    {[]}
      | COMMA vdecl args_  { $2::$3 }
      ;
 
-decls:            { [] } 
+decls:            { [] }
      | decl decls { $1::$2 }
+     | EOF        { [] }
      ;
-     
-stmt: exp SCOLON                                   { Expr $1 }  
+
+stmt: exp SCOLON                                   { Expr $1 }
     | vdecl SCOLON                                 { (fun (x,y) -> Local (x,y) ) $1 }
     | IF exp THEN stmt ELSE stmt                   { IfThenElse ($2,$4,$6) }
     | FOR LPAR exp SCOLON exp SCOLON exp RPAR stmt { For ($3,$5,$7,$9) }
     | WHILE LPAR exp RPAR stmt                     { While ($3,$5) }
-    | DO stmt WHILE LPAR exp RPAR                  { DoWhile ($2,$5) } 
-    | ID COLON                                     { Lable $1 }
+    | DO stmt WHILE LPAR exp RPAR                  { DoWhile ($2,$5) }
+    | ID COLON                                     { Label $1 }
     | GOTO ID SCOLON                               { Goto $2 }
     | SWITCH LPAR exp RPAR LCURL sstmts RCURL      { Switch ($3,$6) }
     | CONTINUE SCOLON                              { Continue }
@@ -108,7 +109,7 @@ stmt: exp SCOLON                                   { Expr $1 }
 stmts:            { [] }
      | stmt stmts { $1::$2 }
      ;
-    
+
 sstmt: CASE VAL COLON  { Case $2 }
      | DEFAULT COLON   { Default }
      | stmt            { NormalStatement $1 }
@@ -117,4 +118,4 @@ sstmt: CASE VAL COLON  { Case $2 }
 sstmts:               { [] }
       | sstmt sstmts  { $1::$2 }
       ;
-     
+
