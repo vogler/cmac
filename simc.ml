@@ -30,15 +30,16 @@ type stmt =
   | Label      of string
   | Goto       of string
   | Switch     of expr * (switch_stmt list)
+  | Block      of stmt list
 and switch_stmt =
   | Default
   | Case            of int
   | NormalStatement of stmt
 
 type decl =
-  | StructDecl of string * ((typ * string) list)
+  | StructDecl of string * (typ * string) list
   | Global     of typ * string
-  | Function   of typ * string * ((typ * string) list) * (stmt list)
+  | Function   of typ * string * (typ * string) list * stmt list
 
 (* helper functions *)
 
@@ -80,19 +81,20 @@ and funArgsToString = function
     | x::xs -> exprToString x^", "^funArgsToString xs
 
 and stmtToString = function
-    | Continue -> "continue ;\n"
-    | Break -> "break ;\n"
+    | Continue -> "continue;\n"
+    | Break -> "break;\n"
     | Return None -> "return;\n"
     | Return (Some x) -> "return "^exprToString x^";\n"
     | Local (t,x) -> typToString t^" "^x^";\n"
     | Expr e -> exprToString e^";\n"
-    | IfThenElse (b,x,y) -> "if "^exprToString b^" then\n\t"^stmtToString x^"else\n\t"^stmtToString y^"\n"
-    | For (i,t,p,s) -> "for ("^exprToString i^";"^exprToString t^";"^exprToString p^") "^stmtToString s^"\n"
-    | While (b,s) -> "while ("^exprToString b^") "^stmtToString s^"\n"
-    | DoWhile (s,b) -> "do "^stmtToString s^" while ("^exprToString b^")"^"\n"
+    | IfThenElse (b,x,y) -> "if ("^exprToString b^")\n"^stmtToString x^"else\n"^stmtToString y
+    | For (i,t,p,s) -> "for ("^exprToString i^";"^exprToString t^";"^exprToString p^")\n"^stmtToString s
+    | While (b,s) -> "while ("^exprToString b^")\n"^stmtToString s
+    | DoWhile (s,b) -> "do\n"^stmtToString s^"while ("^exprToString b^");\n"
     | Label s -> s^":"
     | Goto s  -> "goto "^s^";\n"
     | Switch (e,xs) -> "switch ("^exprToString e^") {\n"^sstmtToString xs^"}\n"
+    | Block xs -> "{\n"^stmtsToString xs^"}\n"
 
 and sstmtToString = function
   | []                      -> ""
@@ -100,7 +102,7 @@ and sstmtToString = function
   | (Case x)::xs            -> "case "^string_of_int x^":\n"^sstmtToString xs
   | (NormalStatement s)::xs -> stmtToString s^sstmtToString xs
 
-let rec stmtsToString = function
+and stmtsToString = function
   | [] -> ""
   | x::xs -> "\t" ^ stmtToString x ^ stmtsToString xs
 

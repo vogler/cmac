@@ -40,7 +40,6 @@ rule ctok = parse
   | ":"            { COLON     }
   | ";"            { SCOLON    }
   | "if"           { IF        }
-  | "then"         { THEN      }
   | "else"         { ELSE      }
   | "return"       { RETURN    }
   | "goto"         { GOTO      }
@@ -52,7 +51,6 @@ rule ctok = parse
   | "case"         { CASE      }
   | "default"      { DEFAULT   }
   | "struct"       { STRUCT    }
-  | "dot"          { DOT       }
   | "do"           { DO        }
   | "int"          { INT       }
   | "void"         { VOID      }

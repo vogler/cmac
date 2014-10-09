@@ -6,7 +6,7 @@ open Simc
 %token ADD SUB MUL DIV LEQ LE GEQ GR EQ NEQ
 
 %token EOF LPAR RPAR LBRAC RBRAC LCURL RCURL DEF COLON SCOLON COMMA DOT INT VOID
-%token IF THEN ELSE RETURN GOTO CONTINUE BREAK WHILE FOR SWITCH CASE DEFAULT STRUCT DO
+%token IF ELSE RETURN GOTO CONTINUE BREAK WHILE FOR SWITCH CASE DEFAULT STRUCT DO
 %token <int>    VAL
 %token <string> ID
 
@@ -60,13 +60,13 @@ exp: s_exp            { $1 }
    | exp DEF exp      { Binop ($1,Asn,$3) }
    ;
 
-typ: INT       { Int }
-    | VOID      { Void }
-    | STRUCT ID { Struct $2 }
-    | typ MUL  { Ptr $1 }
+typ: INT              { Int }
+    | VOID            { Void }
+    | STRUCT ID       { Struct $2 }
+    | typ MUL         { Ptr $1 }
     ;
 
-vdecl: typ ID          { ($1,$2) }
+vdecl: typ ID         { ($1,$2) }
 ;
 
 vdecls:                        { [] }
@@ -91,19 +91,20 @@ decls:            { [] }
      | EOF        { [] }
      ;
 
-stmt: exp SCOLON                                   { Expr $1 }
-    | vdecl SCOLON                                 { (fun (x,y) -> Local (x,y) ) $1 }
-    | IF exp THEN stmt ELSE stmt                   { IfThenElse ($2,$4,$6) }
-    | FOR LPAR exp SCOLON exp SCOLON exp RPAR stmt { For ($3,$5,$7,$9) }
-    | WHILE LPAR exp RPAR stmt                     { While ($3,$5) }
-    | DO stmt WHILE LPAR exp RPAR                  { DoWhile ($2,$5) }
-    | ID COLON                                     { Label $1 }
-    | GOTO ID SCOLON                               { Goto $2 }
-    | SWITCH LPAR exp RPAR LCURL sstmts RCURL      { Switch ($3,$6) }
-    | CONTINUE SCOLON                              { Continue }
-    | BREAK SCOLON                                 { Break }
-    | RETURN exp SCOLON                            { Return (Some $2) }
-    | RETURN SCOLON                                { Return None }
+stmt: exp SCOLON                                    { Expr $1 }
+    | vdecl SCOLON                                  { (fun (x,y) -> Local (x,y) ) $1 }
+    | IF LPAR exp RPAR stmt ELSE stmt               { IfThenElse ($3,$5,$7) }
+    | FOR LPAR exp SCOLON exp SCOLON exp RPAR stmt  { For ($3,$5,$7,$9) }
+    | WHILE LPAR exp RPAR stmt                      { While ($3,$5) }
+    | DO stmt WHILE LPAR exp RPAR SCOLON            { DoWhile ($2,$5) }
+    | ID COLON                                      { Label $1 }
+    | GOTO ID SCOLON                                { Goto $2 }
+    | SWITCH LPAR exp RPAR LCURL sstmts RCURL       { Switch ($3,$6) }
+    | CONTINUE SCOLON                               { Continue }
+    | BREAK SCOLON                                  { Break }
+    | RETURN exp SCOLON                             { Return (Some $2) }
+    | RETURN SCOLON                                 { Return None }
+    | LCURL stmts RCURL                             { Block $2 }
     ;
 
 stmts:            { [] }
